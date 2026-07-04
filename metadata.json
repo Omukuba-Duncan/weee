@@ -1,0 +1,6 @@
+{
+  "name": "WEEE Centre - E-Waste Management",
+  "description": "Professional corporate website for WEEE Centre, leading e-waste collection, recycling, and disposal in Kenya and East Africa. Built with PHP 8 template structure, Bootstrap 5.3, and interactive preview.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
