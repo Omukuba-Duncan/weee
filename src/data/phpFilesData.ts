@@ -153,6 +153,12 @@ declare(strict_types=1);
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
+if (!function_exists('h')) {
+    function h(\$str): string {
+        return htmlspecialchars((string)(\$str ?? ''), ENT_QUOTES, 'UTF-8');
+    }
+}
+
 try {
     // 1. Connect to MySQL without dbname to ensure database exists
     \$pdoServer = new PDO("mysql:host=\$host;charset=\$charset", \$user, \$pass, \$options);
@@ -744,16 +750,65 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST' && isset(\$_POST['action'])) {
                                             <?php foreach (\$services as \$svc): ?>
                                             <tr>
                                                 <td>
-                                                    <div class="fw-bold text-dark"><i class="<?= htmlspecialchars(\$svc['icon']); ?> me-2 text-success"></i><?= htmlspecialchars(\$svc['title']); ?></div>
-                                                    <div class="font-xs text-muted text-truncate" style="max-width:260px;"><?= htmlspecialchars(\$svc['description']); ?></div>
+                                                    <div class="fw-bold text-dark"><i class="<?= h(\$svc['icon']); ?> me-2 text-success"></i><?= h(\$svc['title']); ?></div>
+                                                    <div class="font-xs text-muted text-truncate" style="max-width:260px;"><?= h(\$svc['description']); ?></div>
                                                 </td>
-                                                <td><span class="badge bg-success-subtle text-success border border-success-subtle"><?= htmlspecialchars(\$svc['badge']); ?></span></td>
+                                                <td><span class="badge bg-success-subtle text-success border border-success-subtle"><?= h(\$svc['badge']); ?></span></td>
                                                 <td class="text-end">
-                                                    <form method="POST" action="dashboard.php" onsubmit="return confirm('Delete service from website?');">
-                                                        <input type="hidden" name="action" value="delete_service">
-                                                        <input type="hidden" name="id" value="<?= \$svc['id']; ?>">
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle"><i class="fa-solid fa-trash"></i></button>
-                                                    </form>
+                                                    <div class="d-flex justify-content-end gap-1">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle" data-bs-toggle="modal" data-bs-target="#editSvc<?= \$svc['id']; ?>" title="Edit Service">
+                                                            <i class="fa-solid fa-pen"></i>
+                                                        </button>
+                                                        <form method="POST" action="dashboard.php" onsubmit="return confirm('Delete service from website?');">
+                                                            <input type="hidden" name="action" value="delete_service">
+                                                            <input type="hidden" name="id" value="<?= \$svc['id']; ?>">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle"><i class="fa-solid fa-trash"></i></button>
+                                                        </form>
+                                                    </div>
+
+                                                    <!-- Edit Service Modal -->
+                                                    <div class="modal fade text-start" id="editSvc<?= \$svc['id']; ?>" tabindex="-1" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content border-0 rounded-4 shadow">
+                                                                <div class="modal-header bg-light">
+                                                                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen text-success me-2"></i>Edit Service</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                </div>
+                                                                <form method="POST" action="dashboard.php">
+                                                                    <div class="modal-body p-4">
+                                                                        <input type="hidden" name="action" value="edit_service">
+                                                                        <input type="hidden" name="id" value="<?= h(\$svc['id']); ?>">
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label font-sm fw-semibold">Service Title *</label>
+                                                                            <input type="text" name="title" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$svc['title']); ?>" required>
+                                                                        </div>
+                                                                        <div class="row g-2 mb-3">
+                                                                            <div class="col-6">
+                                                                                <label class="form-label font-sm fw-semibold">Badge Tag</label>
+                                                                                <input type="text" name="badge" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$svc['badge']); ?>">
+                                                                            </div>
+                                                                            <div class="col-6">
+                                                                                <label class="form-label font-sm fw-semibold">Icon Class</label>
+                                                                                <input type="text" name="icon" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$svc['icon']); ?>">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label font-sm fw-semibold">Image URL</label>
+                                                                            <input type="url" name="img" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$svc['image_url']); ?>">
+                                                                        </div>
+                                                                        <div class="mb-2">
+                                                                            <label class="form-label font-sm fw-semibold">Description</label>
+                                                                            <textarea name="desc" class="form-control rounded-3 p-3 font-sm" rows="3"><?= h(\$svc['description']); ?></textarea>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="modal-footer bg-light">
+                                                                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3 font-sm" data-bs-dismiss="modal">Cancel</button>
+                                                                        <button type="submit" class="btn btn-success rounded-pill px-4 font-sm fw-bold"><i class="fa-solid fa-check me-1"></i> Save Changes</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                             </tr>
                                             <?php endforeach; ?>
@@ -818,19 +873,83 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST' && isset(\$_POST['action'])) {
                                             <?php foreach (\$projects as \$proj): ?>
                                             <tr>
                                                 <td>
-                                                    <div class="fw-bold text-dark"><?= htmlspecialchars(\$proj['title']); ?></div>
-                                                    <div class="font-xs text-success fw-semibold"><?= htmlspecialchars(\$proj['metrics']); ?></div>
+                                                    <div class="fw-bold text-dark"><?= h(\$proj['title']); ?></div>
+                                                    <div class="font-xs text-success fw-semibold"><?= h(\$proj['metrics']); ?></div>
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle d-block mb-1"><?= htmlspecialchars(\$proj['category']); ?></span>
-                                                    <span class="font-xs text-muted"><?= htmlspecialchars(\$proj['date_str']); ?></span>
+                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle d-block mb-1"><?= h(\$proj['category']); ?></span>
+                                                    <span class="font-xs text-muted"><?= h(\$proj['date_str']); ?></span>
                                                 </td>
                                                 <td class="text-end">
-                                                    <form method="POST" action="dashboard.php" onsubmit="return confirm('Delete project?');">
-                                                        <input type="hidden" name="action" value="delete_project">
-                                                        <input type="hidden" name="id" value="<?= \$proj['id']; ?>">
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle"><i class="fa-solid fa-trash"></i></button>
-                                                    </form>
+                                                    <div class="d-flex justify-content-end gap-1">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle" data-bs-toggle="modal" data-bs-target="#editProj<?= \$proj['id']; ?>" title="Edit Project">
+                                                            <i class="fa-solid fa-pen"></i>
+                                                        </button>
+                                                        <form method="POST" action="dashboard.php" onsubmit="return confirm('Delete project?');">
+                                                            <input type="hidden" name="action" value="delete_project">
+                                                            <input type="hidden" name="id" value="<?= \$proj['id']; ?>">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle"><i class="fa-solid fa-trash"></i></button>
+                                                        </form>
+                                                    </div>
+
+                                                    <!-- Edit Project Modal -->
+                                                    <div class="modal fade text-start" id="editProj<?= \$proj['id']; ?>" tabindex="-1" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content border-0 rounded-4 shadow">
+                                                                <div class="modal-header bg-light">
+                                                                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen text-primary me-2"></i>Edit Featured Project</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                </div>
+                                                                <form method="POST" action="dashboard.php">
+                                                                    <div class="modal-body p-4">
+                                                                        <input type="hidden" name="action" value="edit_project">
+                                                                        <input type="hidden" name="id" value="<?= h(\$proj['id']); ?>">
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label font-sm fw-semibold">Project Title *</label>
+                                                                            <input type="text" name="title" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$proj['title']); ?>" required>
+                                                                        </div>
+                                                                        <div class="row g-2 mb-3">
+                                                                            <div class="col-6">
+                                                                                <label class="form-label font-sm fw-semibold">Category</label>
+                                                                                <select name="category" class="form-select rounded-pill px-3 py-2 font-sm">
+                                                                                    <option value="Collection Drives" <?= ((\$proj['category'] ?? '') === 'Collection Drives') ? 'selected' : ''; ?>>Collection Drives</option>
+                                                                                    <option value="Data Security" <?= ((\$proj['category'] ?? '') === 'Data Security') ? 'selected' : ''; ?>>Data Security</option>
+                                                                                    <option value="Community Training" <?= ((\$proj['category'] ?? '') === 'Community Training') ? 'selected' : ''; ?>>Community Training</option>
+                                                                                    <option value="Corporate ITAD" <?= ((\$proj['category'] ?? '') === 'Corporate ITAD') ? 'selected' : ''; ?>>Corporate ITAD</option>
+                                                                                </select>
+                                                                            </div>
+                                                                            <div class="col-6">
+                                                                                <label class="form-label font-sm fw-semibold">Badge Tag</label>
+                                                                                <input type="text" name="badge" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$proj['badge']); ?>">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="row g-2 mb-3">
+                                                                            <div class="col-6">
+                                                                                <label class="form-label font-sm fw-semibold">Date / Timeline</label>
+                                                                                <input type="text" name="date_str" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$proj['date_str']); ?>">
+                                                                            </div>
+                                                                            <div class="col-6">
+                                                                                <label class="form-label font-sm fw-semibold">Metrics</label>
+                                                                                <input type="text" name="metrics" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$proj['metrics']); ?>">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label font-sm fw-semibold">Image URL</label>
+                                                                            <input type="url" name="img" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$proj['image_url']); ?>">
+                                                                        </div>
+                                                                        <div class="mb-2">
+                                                                            <label class="form-label font-sm fw-semibold">Description</label>
+                                                                            <textarea name="desc" class="form-control rounded-3 p-3 font-sm" rows="3"><?= h(\$proj['description']); ?></textarea>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="modal-footer bg-light">
+                                                                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3 font-sm" data-bs-dismiss="modal">Cancel</button>
+                                                                        <button type="submit" class="btn btn-primary rounded-pill px-4 font-sm fw-bold"><i class="fa-solid fa-check me-1"></i> Save Changes</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                             </tr>
                                             <?php endforeach; ?>
@@ -1075,35 +1194,104 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST' && isset(\$_POST['action'])) {
                                             <tr>
                                                 <td>
                                                     <div class="d-flex align-items-center gap-3">
-                                                        <img src="<?= htmlspecialchars(\$member['photo']); ?>" alt="img" class="rounded-circle shadow-sm" style="width: 44px; height: 44px; object-fit: cover;">
+                                                        <img src="<?= h(\$member['photo']); ?>" alt="img" class="rounded-circle shadow-sm" style="width: 44px; height: 44px; object-fit: cover;">
                                                         <div>
-                                                            <div class="fw-bold text-dark"><?= htmlspecialchars(\$member['name']); ?></div>
-                                                            <div class="font-xs text-muted"><i class="fa-solid fa-envelope me-1"></i><?= htmlspecialchars(\$member['email']); ?></div>
-                                                            <div class="font-xs text-muted"><i class="fa-solid fa-phone me-1"></i><?= htmlspecialchars(\$member['phone']); ?></div>
+                                                            <div class="fw-bold text-dark"><?= h(\$member['name']); ?></div>
+                                                            <div class="font-xs text-muted"><i class="fa-solid fa-envelope me-1"></i><?= h(\$member['email']); ?></div>
+                                                            <div class="font-xs text-muted"><i class="fa-solid fa-phone me-1"></i><?= h(\$member['phone']); ?></div>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-success-subtle text-success border border-success-subtle d-block mb-1 font-xs"><?= htmlspecialchars(\$member['department']); ?></span>
-                                                    <div class="font-xs text-dark fw-semibold"><?= htmlspecialchars(\$member['role']); ?></div>
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle d-block mb-1 font-xs"><?= h(\$member['department']); ?></span>
+                                                    <div class="font-xs text-dark fw-semibold"><?= h(\$member['role']); ?></div>
                                                 </td>
                                                 <td>
                                                     <form method="POST" action="dashboard.php" class="d-flex align-items-center gap-1">
                                                         <input type="hidden" name="action" value="update_staff_status">
                                                         <input type="hidden" name="id" value="<?= \$member['id']; ?>">
                                                         <select name="status" class="form-select form-select-sm font-xs rounded-pill" onchange="this.form.submit()" style="width: 140px;">
-                                                            <option value="Active" <?= (\$member['status'] === 'Active') ? 'selected' : ''; ?>>Active</option>
-                                                            <option value="On Leave" <?= (\$member['status'] === 'On Leave') ? 'selected' : ''; ?>>On Leave</option>
-                                                            <option value="Field Deployment" <?= (\$member['status'] === 'Field Deployment') ? 'selected' : ''; ?>>Field Deployment</option>
+                                                            <option value="Active" <?= ((\$member['status'] ?? '') === 'Active') ? 'selected' : ''; ?>>Active</option>
+                                                            <option value="On Leave" <?= ((\$member['status'] ?? '') === 'On Leave') ? 'selected' : ''; ?>>On Leave</option>
+                                                            <option value="Field Deployment" <?= ((\$member['status'] ?? '') === 'Field Deployment') ? 'selected' : ''; ?>>Field Deployment</option>
                                                         </select>
                                                     </form>
                                                 </td>
                                                 <td class="text-end">
-                                                    <form method="POST" action="dashboard.php" onsubmit="return confirm('Remove staff member from website?');">
-                                                        <input type="hidden" name="action" value="delete_staff">
-                                                        <input type="hidden" name="id" value="<?= \$member['id']; ?>">
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle"><i class="fa-solid fa-trash"></i></button>
-                                                    </form>
+                                                    <div class="d-flex justify-content-end gap-1">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle" data-bs-toggle="modal" data-bs-target="#editStaff<?= \$member['id']; ?>" title="Edit Staff Member">
+                                                            <i class="fa-solid fa-pen"></i>
+                                                        </button>
+                                                        <form method="POST" action="dashboard.php" onsubmit="return confirm('Remove staff member from website?');">
+                                                            <input type="hidden" name="action" value="delete_staff">
+                                                            <input type="hidden" name="id" value="<?= \$member['id']; ?>">
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle"><i class="fa-solid fa-trash"></i></button>
+                                                        </form>
+                                                    </div>
+
+                                                    <!-- Edit Staff Modal -->
+                                                    <div class="modal fade text-start" id="editStaff<?= \$member['id']; ?>" tabindex="-1" aria-hidden="true">
+                                                        <div class="modal-dialog modal-dialog-centered">
+                                                            <div class="modal-content border-0 rounded-4 shadow">
+                                                                <div class="modal-header bg-light">
+                                                                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen text-primary me-2"></i>Edit Staff Member</h5>
+                                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                                </div>
+                                                                <form method="POST" action="dashboard.php">
+                                                                    <div class="modal-body p-4">
+                                                                        <input type="hidden" name="action" value="edit_staff">
+                                                                        <input type="hidden" name="id" value="<?= h(\$member['id']); ?>">
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label font-sm fw-semibold">Full Name *</label>
+                                                                            <input type="text" name="name" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$member['name']); ?>" required>
+                                                                        </div>
+                                                                        <div class="row g-2 mb-3">
+                                                                            <div class="col-6">
+                                                                                <label class="form-label font-sm fw-semibold">Role / Title *</label>
+                                                                                <input type="text" name="role" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$member['role']); ?>" required>
+                                                                            </div>
+                                                                            <div class="col-6">
+                                                                                <label class="form-label font-sm fw-semibold">Department</label>
+                                                                                <select name="dept" class="form-select rounded-pill px-3 py-2 font-sm">
+                                                                                    <option value="Executive Leadership" <?= ((\$member['department'] ?? '') === 'Executive Leadership') ? 'selected' : ''; ?>>Executive Leadership</option>
+                                                                                    <option value="Operations" <?= ((\$member['department'] ?? '') === 'Operations') ? 'selected' : ''; ?>>Operations</option>
+                                                                                    <option value="Technical & Engineering" <?= ((\$member['department'] ?? '') === 'Technical & Engineering') ? 'selected' : ''; ?>>Technical & Engineering</option>
+                                                                                    <option value="Community & Education" <?= ((\$member['department'] ?? '') === 'Community & Education') ? 'selected' : ''; ?>>Community & Education</option>
+                                                                                    <option value="Administration" <?= ((\$member['department'] ?? '') === 'Administration') ? 'selected' : ''; ?>>Administration</option>
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="row g-2 mb-3">
+                                                                            <div class="col-6">
+                                                                                <label class="form-label font-sm fw-semibold">Email Address</label>
+                                                                                <input type="email" name="email" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$member['email']); ?>">
+                                                                            </div>
+                                                                            <div class="col-6">
+                                                                                <label class="form-label font-sm fw-semibold">Phone Contact</label>
+                                                                                <input type="text" name="phone" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$member['phone']); ?>">
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label font-sm fw-semibold">Photo URL</label>
+                                                                            <input type="url" name="photo" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h(\$member['photo']); ?>">
+                                                                        </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label font-sm fw-semibold">Status</label>
+                                                                            <select name="status" class="form-select rounded-pill px-3 py-2 font-sm">
+                                                                                <option value="Active" <?= ((\$member['status'] ?? '') === 'Active') ? 'selected' : ''; ?>>Active</option>
+                                                                                <option value="On Leave" <?= ((\$member['status'] ?? '') === 'On Leave') ? 'selected' : ''; ?>>On Leave</option>
+                                                                                <option value="Field Deployment" <?= ((\$member['status'] ?? '') === 'Field Deployment') ? 'selected' : ''; ?>>Field Deployment</option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="modal-footer bg-light">
+                                                                        <button type="button" class="btn btn-outline-secondary rounded-pill px-3 font-sm" data-bs-dismiss="modal">Cancel</button>
+                                                                        <button type="submit" class="btn btn-primary rounded-pill px-4 font-sm fw-bold"><i class="fa-solid fa-check me-1"></i> Save Changes</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                             </tr>
                                             <?php endforeach; ?>
@@ -1228,6 +1416,204 @@ if (\$_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>`
   },
   {
+    name: 'download_resource.php',
+    path: 'api/download_resource.php',
+    category: 'api',
+    description: 'Generates and serves downloadable E-Waste guidelines, compliance standards, and toolkits as Word/HTML documents.',
+    lines: 110,
+    codeSnippet: `<?php
+/**
+ * WEEE Centre Official Resource Downloader
+ * File: api/download_resource.php
+ */
+declare(strict_types=1);
+
+\$fileId = \$_GET['file'] ?? 'epr_2024';
+
+\$resources = [
+    'epr_2024' => [
+        'filename' => 'Kenya_E-Waste_EPR_Guidelines_2024.doc',
+        'title' => 'Kenya E-Waste EPR Guidelines 2024',
+        'subtitle' => 'National Extended Producer Responsibility Compliance Framework',
+        'date' => 'Published: July 2024 | Authority: NEMA Kenya & WEEE Centre',
+        'version' => 'Version 3.2 • Official Compliance Document',
+        'content' => '
+            <h3>1. Executive Summary & Regulatory Scope</h3>
+            <p>The Extended Producer Responsibility (EPR) regulations mandate that all manufacturers, brand owners, and importers of electrical and electronic equipment (EEE) in East Africa take financial and physical responsibility for their products throughout their entire lifecycle, particularly at the post-consumer stage.</p>
+            <p>WEEE Centre serves as the certified Producer Responsibility Organization (PRO) partner, providing traceable collection, recycling, and NEMA audit compliance.</p>
+            
+            <h3>2. Mandatory Producer Compliance Quotas</h3>
+            <p>Under section 14 of the Sustainable Waste Management Act, producers must achieve annual collection and recycling targets based on their net import and production volumes:</p>
+            <ul>
+                <li><strong>Year 1 (2024):</strong> 30% total weight of EEE introduced into the Kenyan market.</li>
+                <li><strong>Year 2 (2025):</strong> 50% mandatory recovery and eco-friendly treatment.</li>
+                <li><strong>Year 3 (2026+):</strong> 70% zero-landfill circular recovery target.</li>
+                <li><strong>Compliance Penalties:</strong> Failure to submit annual EPR audit reports results in import license suspension by NEMA.</li>
+            </ul>
+
+            <h3>3. WEEE Centre Take-Back Integration</h3>
+            <p>Partnering with WEEE Centre provides producers with immediate compliance through our nationwide infrastructure:</p>
+            <ul>
+                <li>Deployment of branded collection bins at retail outlets and distributor hubs.</li>
+                <li>Reverse logistics and hazardous material transport using NEMA-licensed vehicles.</li>
+                <li>Issuance of official Certificates of Recycling and annual EPR tax deduction certificates.</li>
+                <li>Full traceability reporting via our real-time client portal.</li>
+            </ul>
+
+            <h3>4. Contact & Auditing Support</h3>
+            <p>For corporate onboarding and EPR audit verification, contact our compliance desk at <strong>epr@weeecentre.com</strong> or call our Nairobi headquarters at <strong>+254 700 111 222</strong>.</p>
+        '
+    ],
+    'data_standard' => [
+        'filename' => 'Corporate_Data_Destruction_Standard.doc',
+        'title' => 'Corporate Data Destruction Standard',
+        'subtitle' => 'NIST SP 800-88 Rev. 1 Compliant Sanitization Protocols',
+        'date' => 'Published: Q1 2025 | Certification: ISO 9001:2015 & DoD 5220.22-M',
+        'version' => 'Version 4.0 • Technical Security Specification',
+        'content' => '
+            <h3>1. Purpose & Data Security Mandate</h3>
+            <p>In an era of stringent data privacy laws (such as the Kenya Data Protection Act 2019 and GDPR), decommissioning IT assets without certified data destruction exposes organizations to catastrophic breaches, financial penalties, and loss of reputation.</p>
+            <p>This standard defines WEEE Centre’s mandatory three-stage data sanitization process for all client server arrays, hard disk drives (HDDs), solid-state drives (SSDs), and magnetic tapes.</p>
+
+            <h3>2. Three-Stage Sanitization Protocol</h3>
+            <p>Every storage device processed at WEEE Centre undergoes rigorous verification before physical recycling:</p>
+            <ul>
+                <li><strong>Stage 1: Software Overwriting (Clear):</strong> 3-pass cryptographic data wiping for reusable drives, verifying random pattern overwrite across 100% of sectors.</li>
+                <li><strong>Stage 2: Magnetic Degaussing (Purge):</strong> Exposing magnetic media (HDDs/tapes) to a 10,000 Gauss coercive field, permanently destroying data magnetic domains.</li>
+                <li><strong>Stage 3: Physical Shredding (Destroy):</strong> Industrial shredding down to 6mm particles, rendering solid-state chips and drive platters physically irrecoverable.</li>
+            </ul>
+
+            <h3>3. Chain of Custody & Audit Trail</h3>
+            <p>Total transparency is maintained from asset collection to final destruction:</p>
+            <ul>
+                <li>GPS-tracked armored transit from client premises to WEEE Centre high-security facility.</li>
+                <li>Serial number barcode scanning and logging into immutable database records.</li>
+                <li>Optional 24/7 live video stream viewing of physical shredding for client audit teams.</li>
+                <li>Formal Certificate of Destruction (CoD) issued within 48 hours, detailing every serial number processed.</li>
+            </ul>
+
+            <h3>4. Environmental Scrap Recovery</h3>
+            <p>Post-shredding metal and electronic scrap is refined in accordance with the Basel Convention, recovering copper, aluminum, and rare earth elements without chemical pollution.</p>
+        '
+    ],
+    'impact_report' => [
+        'filename' => 'WEEE_Centre_Annual_Impact_Report_2025.doc',
+        'title' => 'Annual Environmental Impact Report',
+        'subtitle' => 'Transforming Electronic Waste into Green Economic Opportunities',
+        'date' => 'Reporting Period: Jan 2024 - Dec 2025 | Publisher: WEEE Centre Kenya',
+        'version' => 'Annual Edition • Public Sustainability Disclosure',
+        'content' => '
+            <h3>1. Executive Leadership Statement</h3>
+            <p>Over the past year, WEEE Centre has significantly expanded its operational footprint across East Africa, demonstrating that responsible electronic waste management is both an environmental necessity and a catalyst for green employment.</p>
+            <p>Through collaborative partnerships with government ministries, telecom operators, and educational institutions, we have diverted record volumes of hazardous waste from open dumpsites.</p>
+
+            <h3>2. Key Environmental & Social Metrics</h3>
+            <p>Our verified impact across Kenya, Uganda, Tanzania, and Rwanda for the reporting year includes:</p>
+            <ul>
+                <li><strong>3,450+ Tonnes</strong> of e-waste safely collected, dismantled, and recycled.</li>
+                <li><strong>18,600+ Tonnes</strong> of carbon dioxide (CO2) equivalent emissions prevented from entering the atmosphere.</li>
+                <li><strong>98.5% Raw Material Recovery Rate</strong> for steel, aluminum, copper, and precious metals.</li>
+                <li><strong>650+ Youth and Informal Sector Technicians</strong> trained in safe dismantling and equipped with personal protective equipment (PPE).</li>
+                <li><strong>120+ Public Schools and Universities</strong> provided with free e-waste collection bins and awareness workshops.</li>
+            </ul>
+
+            <h3>3. Circular Economy Innovations</h3>
+            <p>In 2025, we launched East Africa’s first dedicated Solar Battery & Lithium Neutralization pilot, addressing the growing challenge of decommissioned off-grid solar storage.</p>
+            <p>We also expanded our IT Asset Disposal (ITAD) refurbishment labs, donating over 800 upgraded computers to rural digital literacy centers.</p>
+
+            <h3>4. Future Outlook (2026-2030 Targets)</h3>
+            <p>We aim to expand collection capacity to 10,000 tonnes annually by 2028 and establish regional preprocessing hubs in Mombasa, Kisumu, and Eldoret.</p>
+        '
+    ],
+    'household_toolkit' => [
+        'filename' => 'Household_E-Waste_Recycling_Toolkit.doc',
+        'title' => 'Household E-Waste Recycling Toolkit',
+        'subtitle' => 'A Citizen’s Guide to Safe Electronic Waste Disposal at Home',
+        'date' => 'Published: 2025 | Author: WEEE Centre Community Outreach Team',
+        'version' => 'Citizen Edition • Free Educational Guide',
+        'content' => '
+            <h3>1. What is Household E-Waste?</h3>
+            <p>Electronic waste (e-waste) includes any discarded appliance or device that operates on electricity, batteries, or solar power. When thrown into regular garbage bins or burned, heavy metals like lead, mercury, and cadmium leach into soil and drinking water.</p>
+            <p>Common household e-waste includes: old mobile phones, chargers, broken TVs, laptops, batteries, microwaves, irons, and fluorescent bulbs.</p>
+
+            <h3>2. Three Golden Rules of Safe E-Waste Handling</h3>
+            <p>Follow these essential safety practices at home before bringing items to a collection bin:</p>
+            <ul>
+                <li><strong>Never crush, puncture, or burn lithium-ion batteries</strong> (from phones/laptops) — they can explode or cause toxic chemical fires.</li>
+                <li><strong>Store obsolete electronics in a dry box</strong> away from children and direct sunlight.</li>
+                <li><strong>Do not attempt to dismantle CRT televisions or microwaves</strong> yourself due to high-voltage capacitors and lead glass.</li>
+            </ul>
+
+            <h3>3. Where to Drop Off Your E-Waste</h3>
+            <p>WEEE Centre has established convenient, secure drop-off bins across major towns:</p>
+            <ul>
+                <li><strong>Nairobi:</strong> WEEE Centre HQ (Utawala), Sarit Centre, Yaya Centre, and participating Safaricom retail outlets.</li>
+                <li><strong>Mombasa:</strong> Nyali Centre and City Mall collection points.</li>
+                <li><strong>Kisumu:</strong> Mega City Mall green recycling station.</li>
+                <li><strong>Home Pickup:</strong> For loads exceeding 50kg, request a free residential collection via our website or by calling <strong>+254 700 111 222</strong>.</li>
+            </ul>
+
+            <h3>4. Become a Green Champion</h3>
+            <p>Encourage your neighborhood estate association or school to host a weekend E-Waste Collection Drive. WEEE Centre provides collection trucks, tents, and certificates of appreciation for participating communities.</p>
+        '
+    ]
+];
+
+\$res = \$resources[\$fileId] ?? \$resources['epr_2024'];
+
+header("Content-Type: application/vnd.ms-word; charset=UTF-8");
+header("Content-Disposition: attachment; filename=\"{\$res['filename']}\"");
+header("Cache-Control: private, max-age=0, must-revalidate");
+header("Pragma: public");
+
+echo '<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body { font-family: "Segoe UI", Arial, sans-serif; color: #333333; line-height: 1.6; margin: 30px; }
+    .header { background-color: #228B22; color: #ffffff; padding: 20px; text-align: center; border-radius: 5px; }
+    .header h1 { margin: 0; font-size: 22pt; color: #ffffff; }
+    .header p { margin: 5px 0 0 0; font-size: 11pt; color: #e6ffe6; }
+    .title-box { margin-top: 30px; border-bottom: 2px solid #228B22; padding-bottom: 15px; }
+    .title-box h2 { color: #143c14; font-size: 18pt; margin: 0 0 10px 0; }
+    .title-box h4 { color: #555555; font-size: 13pt; margin: 0; font-style: italic; }
+    .meta { background-color: #f4f9f4; border: 1px solid #dcdcdc; padding: 10px 15px; margin-top: 15px; font-size: 10pt; color: #444444; }
+    h3 { color: #228B22; font-size: 14pt; margin-top: 25px; border-bottom: 1px solid #eeeeee; padding-bottom: 5px; }
+    p { font-size: 11pt; text-align: justify; }
+    ul { margin-top: 10px; }
+    li { font-size: 11pt; margin-bottom: 8px; }
+    .footer { margin-top: 50px; border-top: 1px solid #cccccc; padding-top: 15px; text-align: center; font-size: 9pt; color: #777777; }
+</style>
+</head>
+<body>
+    <div class="header">
+        <h1>WEEE CENTRE KENYA</h1>
+        <p>Responsible E-Waste Management • NEMA Licensed • ISO 9001:2015 Certified</p>
+    </div>
+
+    <div class="title-box">
+        <h2>' . htmlspecialchars(\$res['title']) . '</h2>
+        <h4>' . htmlspecialchars(\$res['subtitle']) . '</h4>
+        <div class="meta">
+            <strong>' . htmlspecialchars(\$res['version']) . '</strong><br>
+            <span>' . htmlspecialchars(\$res['date']) . '</span>
+        </div>
+    </div>
+
+    <div class="content">
+        ' . \$res['content'] . '
+    </div>
+
+    <div class="footer">
+        WEEE Centre Headquarters • Utawala, Nairobi, Kenya • Tel: +254 700 111 222 • Email: info@weeecentre.com<br>
+        Official Compliance Document downloaded from WEEE Centre Portal
+    </div>
+</body>
+</html>';
+exit;
+?>`
+  },
+  {
     name: 'index.php',
     path: 'index.php',
     category: 'core',
@@ -1285,10 +1671,10 @@ $services = $stmt->fetchAll();
             <div class="col-md-6 col-lg-3">
                 <div class="card h-100 border-0 shadow-sm rounded-4 p-4 text-center">
                     <div class="bg-light-green text-success rounded-circle p-3 mx-auto mb-3" style="width:64px;height:64px;display:flex;align-items:center;justify-content:center;">
-                        <i><?= htmlspecialchars($svc['icon']); ?> fs-3</i>
+                        <i class="<?= h($svc['icon']); ?> fs-3"></i>
                     </div>
-                    <h5 class="fw-bold mb-2"><?= htmlspecialchars($svc['title']); ?></h5>
-                    <p class="text-muted font-sm mb-3"><?= htmlspecialchars($svc['description']); ?></p>
+                    <h5 class="fw-bold mb-2"><?= h($svc['title']); ?></h5>
+                    <p class="text-muted font-sm mb-3"><?= h($svc['description']); ?></p>
                     <a href="services.php" class="btn btn-sm btn-outline-success rounded-pill mt-auto">Learn More &rarr;</a>
                 </div>
             </div>
@@ -1413,26 +1799,90 @@ require_once 'includes/navbar.php';
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="card border-0 rounded-4 shadow-sm overflow-hidden h-100 bg-white">
                     <div class="position-relative" style="height: 280px; overflow: hidden;">
-                        <img src="<?= htmlspecialchars(\$staff['photo']); ?>" alt="<?= htmlspecialchars(\$staff['name']); ?>" class="w-100 h-100" style="object-fit: cover;">
+                        <img src="<?= h(\$staff['photo']); ?>" alt="<?= h(\$staff['name']); ?>" class="w-100 h-100" style="object-fit: cover;">
                         <?php 
                             \$statusClass = 'bg-secondary text-white';
-                            if (\$staff['status'] === 'Active') \$statusClass = 'bg-success text-white';
-                            if (\$staff['status'] === 'Field Deployment') \$statusClass = 'bg-warning text-dark';
+                            if ((\$staff['status'] ?? '') === 'Active') \$statusClass = 'bg-success text-white';
+                            if ((\$staff['status'] ?? '') === 'Field Deployment') \$statusClass = 'bg-warning text-dark';
                         ?>
                         <span class="position-absolute top-0 end-0 m-3 badge rounded-pill px-3 py-2 font-xs shadow-sm <?= \$statusClass; ?>">
-                            <i class="fa-solid fa-circle me-1" style="font-size: 8px;"></i> <?= htmlspecialchars(\$staff['status']); ?>
+                            <i class="fa-solid fa-circle me-1" style="font-size: 8px;"></i> <?= h(\$staff['status']); ?>
                         </span>
                     </div>
                     <div class="card-body p-4">
-                        <span class="badge bg-light text-success border border-success-subtle mb-2 font-xs"><?= htmlspecialchars(\$staff['department']); ?></span>
-                        <h4 class="fw-bold fs-5 text-dark-green mb-1"><?= htmlspecialchars(\$staff['name']); ?></h4>
-                        <p class="text-muted font-sm fw-semibold mb-3"><?= htmlspecialchars(\$staff['role']); ?></p>
+                        <span class="badge bg-light text-success border border-success-subtle mb-2 font-xs"><?= h(\$staff['department']); ?></span>
+                        <h4 class="fw-bold fs-5 text-dark-green mb-1"><?= h(\$staff['name']); ?></h4>
+                        <p class="text-muted font-sm fw-semibold mb-3"><?= h(\$staff['role']); ?></p>
                         <hr class="my-3 opacity-10">
                         <div class="d-flex flex-column gap-2 font-xs text-muted">
-                            <div><i class="fa-solid fa-envelope me-2 text-success"></i><a href="mailto:<?= htmlspecialchars(\$staff['email']); ?>" class="text-decoration-none text-muted"><?= htmlspecialchars(\$staff['email']); ?></a></div>
-                            <div><i class="fa-solid fa-phone me-2 text-success"></i><?= htmlspecialchars(\$staff['phone']); ?></div>
+                            <div><i class="fa-solid fa-envelope me-2 text-success"></i><a href="mailto:<?= h(\$staff['email']); ?>" class="text-decoration-none text-muted"><?= h(\$staff['email']); ?></a></div>
+                            <div><i class="fa-solid fa-phone me-2 text-success"></i><?= h(\$staff['phone']); ?></div>
                         </div>
                     </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<!-- Resources & Education Hub -->
+<section class="py-5 bg-white" id="resources">
+    <div class="container py-4">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4">
+            <div>
+                <span class="text-uppercase font-xs fw-bold text-success mb-1 d-block">Knowledge Hub</span>
+                <h2 class="fw-bold text-dark-green mb-0">E-Waste Resources & Guidelines</h2>
+            </div>
+            <a href="contact.php" class="btn btn-outline-success rounded-pill px-4 py-2 font-sm mt-3 mt-md-0">Request Custom Report</a>
+        </div>
+
+        <div class="row g-4">
+            <?php
+            \$resourcesList = [
+                [
+                    'id' => 'epr_2024',
+                    'title' => 'Kenya E-Waste EPR Guidelines 2024',
+                    'type' => 'PDF Document • 4.2 MB',
+                    'icon' => 'fa-solid fa-file-pdf',
+                    'filename' => 'Kenya_E-Waste_EPR_Guidelines_2024.doc'
+                ],
+                [
+                    'id' => 'data_standard',
+                    'title' => 'Corporate Data Destruction Standard',
+                    'type' => 'PDF Guide • 2.1 MB',
+                    'icon' => 'fa-solid fa-file-shield',
+                    'filename' => 'Corporate_Data_Destruction_Standard.doc'
+                ],
+                [
+                    'id' => 'impact_report',
+                    'title' => 'Annual Environmental Impact Report',
+                    'type' => 'Publication • 6.8 MB',
+                    'icon' => 'fa-solid fa-book-open',
+                    'filename' => 'WEEE_Centre_Annual_Impact_Report_2025.doc'
+                ],
+                [
+                    'id' => 'household_toolkit',
+                    'title' => 'Household Recycling Toolkit',
+                    'type' => 'Brochure • 1.5 MB',
+                    'icon' => 'fa-solid fa-file-lines',
+                    'filename' => 'Household_E-Waste_Recycling_Toolkit.doc'
+                ]
+            ];
+            foreach (\$resourcesList as \$res):
+            ?>
+            <div class="col-12 col-md-6">
+                <div class="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 border border-success border-opacity-25 shadow-sm">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-white text-success rounded p-3 shadow-sm fs-4"><i class="<?= h(\$res['icon']); ?>"></i></div>
+                        <div>
+                            <h5 class="fw-bold fs-6 mb-1 text-dark-green"><?= h(\$res['title']); ?></h5>
+                            <span class="font-xs text-muted"><?= h(\$res['type']); ?></span>
+                        </div>
+                    </div>
+                    <a href="api/download_resource.php?file=<?= h(\$res['id']); ?>" download="<?= h(\$res['filename']); ?>" class="btn btn-success btn-sm rounded-pill px-3 py-1 font-xs d-flex align-items-center text-decoration-none shadow-sm">
+                        <i class="fa-solid fa-download me-1"></i> Download
+                    </a>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -1471,13 +1921,13 @@ $services = $stmt->fetchAll();
             <div class="col-12 border-bottom pb-5 mb-4">
                 <div class="row align-items-center g-4 <?= ($idx % 2 !== 0) ? 'flex-md-row-reverse' : ''; ?>">
                     <div class="col-md-6">
-                        <span class="badge bg-light text-success border px-3 py-1 mb-2"><?= htmlspecialchars($svc['badge']); ?></span>
-                        <h2 class="fw-bold mb-3"><?= htmlspecialchars($svc['title']); ?></h2>
-                        <p class="text-muted mb-4"><?= htmlspecialchars($svc['description']); ?></p>
+                        <span class="badge bg-light text-success border px-3 py-1 mb-2"><?= h($svc['badge']); ?></span>
+                        <h2 class="fw-bold mb-3"><?= h($svc['title']); ?></h2>
+                        <p class="text-muted mb-4"><?= h($svc['description']); ?></p>
                         <a href="contact.php?service=<?= urlencode($svc['title']); ?>" class="btn btn-success rounded-pill px-4 py-2">Book This Service &rarr;</a>
                     </div>
                     <div class="col-md-6">
-                        <img src="<?= htmlspecialchars($svc['image_url']); ?>" class="img-fluid rounded-4 shadow" alt="<?= htmlspecialchars($svc['title']); ?>">
+                        <img src="<?= h($svc['image_url']); ?>" class="img-fluid rounded-4 shadow" alt="<?= h($svc['title']); ?>">
                     </div>
                 </div>
             </div>
@@ -1525,16 +1975,16 @@ require_once 'includes/navbar.php';
                 <?php foreach (\$projects as \$proj): ?>
                 <div class="col-md-6 col-lg-4">
                     <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-                        <img src="<?= htmlspecialchars(\$proj['image_url']); ?>" class="card-img-top" alt="<?= htmlspecialchars(\$proj['title']); ?>" style="height:220px;object-fit:cover;">
+                        <img src="<?= h(\$proj['image_url']); ?>" class="card-img-top" alt="<?= h(\$proj['title']); ?>" style="height:220px;object-fit:cover;">
                         <div class="card-body p-4">
-                            <span class="badge bg-success mb-2"><?= htmlspecialchars(\$proj['badge'] ?? 'Project'); ?></span>
-                            <span class="badge bg-light text-muted border mb-2 ms-1"><?= htmlspecialchars(\$proj['category'] ?? 'General'); ?></span>
-                            <h5 class="fw-bold text-dark-green mt-1"><?= htmlspecialchars(\$proj['title']); ?></h5>
-                            <p class="text-muted font-sm"><?= htmlspecialchars(\$proj['description']); ?></p>
+                            <span class="badge bg-success mb-2"><?= h(\$proj['badge'] ?? 'Project'); ?></span>
+                            <span class="badge bg-light text-muted border mb-2 ms-1"><?= h(\$proj['category'] ?? 'General'); ?></span>
+                            <h5 class="fw-bold text-dark-green mt-1"><?= h(\$proj['title']); ?></h5>
+                            <p class="text-muted font-sm"><?= h(\$proj['description']); ?></p>
                             <hr class="my-3 opacity-10">
                             <div class="d-flex justify-content-between align-items-center font-xs">
-                                <span class="fw-bold text-success"><i class="fa-solid fa-chart-line me-1"></i><?= htmlspecialchars(\$proj['metrics']); ?></span>
-                                <span class="text-muted"><?= htmlspecialchars(\$proj['date_str']); ?></span>
+                                <span class="fw-bold text-success"><i class="fa-solid fa-chart-line me-1"></i><?= h(\$proj['metrics']); ?></span>
+                                <span class="text-muted"><?= h(\$proj['date_str']); ?></span>
                             </div>
                         </div>
                     </div>

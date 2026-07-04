@@ -75,11 +75,11 @@ declare(strict_types=1);
                     <ul class="list-unstyled mb-0 font-sm pe-lg-2">
                         <li class="d-flex mb-3 align-items-start">
                             <i class="fa-solid fa-location-dot mt-1 me-2 text-accent-green"></i>
-                            <span class="text-light">P.O Box 69633 – 00400 Nairobi, Kenya</span>
+                            <span class="text-light">P.O Box 69633 – 00100 Nairobi, Kenya</span>
                         </li>
                         <li class="d-flex mb-3 align-items-center">
                             <i class="fa-solid fa-phone me-2 text-accent-green"></i>
-                            <a href="tel:+254700000000" class="text-light text-decoration-none">+254 700 000 000</a>
+                            <a href="tel:+254700000000" class="text-light text-decoration-none">+254 768 449 499</a>
                         </li>
                         <li class="d-flex mb-3 align-items-center">
                             <i class="fa-solid fa-envelope me-2 text-accent-green"></i>

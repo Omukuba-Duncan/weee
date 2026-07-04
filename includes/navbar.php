@@ -26,8 +26,8 @@ if (!function_exists('is_active_nav')) {
 <div class="bg-dark-green text-white py-1 px-3 d-none d-lg-block top-bar-info">
     <div class="container d-flex justify-content-between align-items-center font-sm">
         <div>
-            <span class="me-3"><i class="fa-solid fa-location-dot me-1 text-accent-green"></i> P.O Box 69633 – 00400 Nairobi, Kenya</span>
-            <span><i class="fa-solid fa-phone me-1 text-accent-green"></i> +254 700 000 000</span>
+            <span class="me-3"><i class="fa-solid fa-location-dot me-1 text-accent-green"></i> P.O Box 69633 – 00100 Nairobi, Kenya</span>
+            <span><i class="fa-solid fa-phone me-1 text-accent-green"></i> +254 768 449 499</span>
         </div>
         <div>
             <a href="mailto:info@weeecentre.com" class="text-white text-decoration-none me-3"><i class="fa-solid fa-envelope me-1 text-accent-green"></i> info@weeecentre.com</a>

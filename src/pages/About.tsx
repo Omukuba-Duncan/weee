@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { downloadResourcePdf } from '../utils/pdfGenerator';
 
 interface AboutProps {
   setActivePage: (page: string) => void;
@@ -15,10 +16,10 @@ export const About: React.FC<AboutProps> = ({ setActivePage }) => {
   ];
 
   const resources = [
-    { title: 'Kenya E-Waste EPR Guidelines 2024', type: 'PDF Document • 4.2 MB', icon: 'fa-solid fa-file-pdf' },
-    { title: 'Corporate Data Destruction Standard', type: 'PDF Guide • 2.1 MB', icon: 'fa-solid fa-file-shield' },
-    { title: 'Annual Environmental Impact Report', type: 'Publication • 6.8 MB', icon: 'fa-solid fa-book-open' },
-    { title: 'Household Recycling Toolkit', type: 'Brochure • 1.5 MB', icon: 'fa-solid fa-file-lines' }
+    { id: 'epr_2024', title: 'Kenya E-Waste EPR Guidelines 2024', type: 'PDF Document • 4.2 MB', icon: 'fa-solid fa-file-pdf' },
+    { id: 'data_standard', title: 'Corporate Data Destruction Standard', type: 'PDF Guide • 2.1 MB', icon: 'fa-solid fa-file-shield' },
+    { id: 'impact_report', title: 'Annual Environmental Impact Report', type: 'Publication • 6.8 MB', icon: 'fa-solid fa-book-open' },
+    { id: 'household_toolkit', title: 'Household Recycling Toolkit', type: 'Brochure • 1.5 MB', icon: 'fa-solid fa-file-lines' }
   ];
 
   return (
@@ -175,8 +176,8 @@ export const About: React.FC<AboutProps> = ({ setActivePage }) => {
                       <span className="font-xs text-muted">{res.type}</span>
                     </div>
                   </div>
-                  <button onClick={() => alert(`Downloading ${res.title}...`)} className="btn btn-success btn-sm rounded-pill px-3 py-1 font-xs d-flex align-items-center">
-                    <i className="fa-solid fa-download me-1"></i> Download
+                  <button onClick={() => downloadResourcePdf(res.id, res.title)} className="btn btn-success btn-sm rounded-pill px-3 py-1 font-xs d-flex align-items-center shadow-sm">
+                    <i className="fa-solid fa-download me-1"></i> Download PDF
                   </button>
                 </div>
               </div>
