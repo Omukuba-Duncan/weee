@@ -27,11 +27,8 @@ if (!function_exists('h')) {
 
 try {
     //Connect directly to Railway MySQL
-    $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+    $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
     $pdo = new PDO($dsn, $user, $pass, $options);
-
-echo "DATABASE CONNECTED SUCCESSFULLY";
-exit;
 
     // 3. Auto-create all required tables if missing (prevents Base table not found errors)
     $pdo->exec("
