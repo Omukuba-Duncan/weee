@@ -129,10 +129,17 @@ try {
       `email` VARCHAR(255) NOT NULL,
       `phone` VARCHAR(100) DEFAULT '',
       `organization` VARCHAR(255) DEFAULT '',
-      `notes` TEXT DEFAULT '',
+      `notes` TEXT NULL,
       `status` VARCHAR(50) DEFAULT 'Registered',
       `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;    ");
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
+
+    try {
+        $pdo->exec("ALTER TABLE `event_registrations` MODIFY COLUMN `notes` TEXT NULL");
+    } catch (PDOException $e) {
+        // Ignore migration errors for environments where the table is not yet available.
+    }
 
     // 4. Seed default admin if empty
     if ($pdo->query("SELECT COUNT(*) FROM admins")->fetchColumn() == 0) {
