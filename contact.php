@@ -11,7 +11,7 @@ $successMsg = '';
 $errorMsg = '';
 
 $departmentEmails = [
-    'general' => 'info@weeecentre.com',
+    'general' => 'malaladuncan1@gmail.com',
     'executive' => 'leadership@weeecentre.com',
     'operations' => 'operations@weeecentre.com',
     'tech' => 'tech@weeecentre.com',
