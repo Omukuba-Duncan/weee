@@ -30,6 +30,9 @@ try {
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
     $pdo = new PDO($dsn, $user, $pass, $options);
 
+echo "DATABASE CONNECTED SUCCESSFULLY";
+exit;
+
     // 3. Auto-create all required tables if missing (prevents Base table not found errors)
     $pdo->exec("
     CREATE TABLE IF NOT EXISTS `admins` (
