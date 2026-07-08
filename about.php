@@ -371,6 +371,50 @@ $brochure = $resourcesList[0] ?? [
         </div>
     </div>
 </section>
+<section class="py-5 bg-light" id="resources">
+    <div class="container py-4">
+        <div class="text-center max-w-2xl mx-auto mb-5">
+            <span class="text-uppercase font-xs fw-bold text-success mb-2 d-block">Resources</span>
+            <h2 class="fw-bold text-dark-green">Downloadable Resources</h2>
+            <p class="text-muted">Access our latest compliance, educational, and impact resources. All items below are currently active.</p>
+        </div>
+        <?php
+        try {
+            $resourceStmt = $pdo->query("SELECT * FROM download_resources WHERE status = 'active' ORDER BY created_at DESC");
+            $activeResources = $resourceStmt->fetchAll();
+        } catch (Exception $e) {
+            $activeResources = [];
+        }
+        ?>
+        <?php if (empty($activeResources)): ?>
+        <div class="card border-0 rounded-4 shadow-sm p-4 p-md-5 text-center bg-white">
+            <div class="text-success fs-2 mb-3"><i class="fa-solid fa-file-circle-xmark"></i></div>
+            <h4 class="fw-bold text-dark-green mb-2">No active resources available yet</h4>
+            <p class="text-muted mb-0">Please check back soon for new guides, reports, and compliance materials.</p>
+        </div>
+        <?php else: ?>
+        <div class="row g-4">
+            <?php foreach ($activeResources as $resource): ?>
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card border-0 rounded-4 shadow-sm h-100 bg-white">
+                    <div class="card-body p-4">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill mb-3"><?= h($resource['type'] ?? 'Resource'); ?></span>
+                        <h5 class="fw-bold text-dark-green mb-2"><?= h($resource['title'] ?? 'Untitled Resource'); ?></h5>
+                        <p class="text-muted mb-4 font-sm"><?= h($resource['description'] ?? ''); ?></p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted font-xs"><i class="fa-solid fa-calendar-days me-2 text-success"></i><?= h($resource['created_at'] ?? ''); ?></span>
+                            <a href="api/download_resource.php?file=<?= h($resource['id']); ?>" class="btn btn-outline-success btn-sm rounded-pill px-3 py-2">
+                                <i class="fa-solid fa-download me-2"></i>Download
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+    </div>
+</section>
 <?php require_once 'includes/footer.php'; ?>
 <script>
     const overlay = document.getElementById('visionMissionOverlay');
