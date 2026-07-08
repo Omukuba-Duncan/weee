@@ -209,7 +209,7 @@ $brochure = $resourcesList[0] ?? [
 </div>
 
 <!-- NEMA & ISO Certifications Section -->
-<section class="py-5 bg-white">
+<section class="py-5 bg-white" id="licenses-standards">
     <div class="container py-4">
         <div class="text-center max-w-2xl mx-auto mb-5">
             <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 rounded-pill mb-2">Certified Compliance</span>
@@ -264,6 +264,15 @@ $brochure = $resourcesList[0] ?? [
             </div>
         </div>
         <div class="row g-4 justify-content-center" id="staffGrid">
+            <?php if (empty($staffMembers)): ?>
+            <div class="col-12">
+                <div class="card border-0 rounded-4 shadow-sm p-4 p-md-5 text-center bg-white">
+                    <div class="text-success fs-2 mb-3"><i class="fa-solid fa-users-slash"></i></div>
+                    <h4 class="fw-bold text-dark-green mb-2">Our team roster is being updated</h4>
+                    <p class="text-muted mb-0">Please check back soon for the latest leadership and technical team profiles.</p>
+                </div>
+            </div>
+            <?php else: ?>
             <?php foreach ($staffMembers as $staff): ?>
             <div class="col-12 col-sm-6 col-lg-4 staff-card-small" data-department="<?= h($staff['department']); ?>">
                 <div class="card border-0 rounded-4 shadow-sm overflow-hidden h-100 bg-white">
@@ -291,6 +300,14 @@ $brochure = $resourcesList[0] ?? [
                 </div>
             </div>
             <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+        <div class="text-center mt-4" id="staffEmptyState" style="display: none;">
+            <div class="card border-0 rounded-4 shadow-sm p-4 bg-white d-inline-block">
+                <div class="text-success fs-2 mb-2"><i class="fa-solid fa-magnifying-glass"></i></div>
+                <h5 class="fw-bold text-dark-green mb-1">No team members match this filter</h5>
+                <p class="text-muted mb-0">Try another department to view more team profiles.</p>
+            </div>
         </div>
     </div>
 </section>
@@ -312,8 +329,16 @@ $brochure = $resourcesList[0] ?? [
                     <a href="api/download_resource.php?file=<?= h($brochure['id']); ?>" download="<?= h($brochure['file_name']); ?>" class="btn btn-success rounded-pill px-4 py-2 shadow-sm">
                         <i class="fa-solid fa-file-pdf me-2"></i>Download Brochure
                     </a>
-                    <a href="contact.php" class="btn btn-outline-success rounded-pill px-4 py-2 shadow-sm">
-                        Speak with a Consultant
+                </div>
+                <div class="d-flex flex-column flex-sm-row gap-2 mt-3">
+                    <a href="tel:0768449499" class="btn btn-outline-success rounded-pill px-3 py-2 shadow-sm">
+                        <i class="fa-solid fa-phone me-2"></i>Call
+                    </a>
+                    <a href="https://wa.me/254101016136" target="_blank" rel="noopener noreferrer" class="btn btn-outline-success rounded-pill px-3 py-2 shadow-sm">
+                        <i class="fa-brands fa-whatsapp me-2"></i>WhatsApp
+                    </a>
+                    <a href="mailto:malaladuncan1@gmail.com" class="btn btn-outline-success rounded-pill px-3 py-2 shadow-sm">
+                        <i class="fa-solid fa-envelope me-2"></i>Email
                     </a>
                 </div>
             </div>
@@ -387,22 +412,32 @@ $brochure = $resourcesList[0] ?? [
     });
 
     const filterButtons = document.querySelectorAll('.staff-filter-btn');
-    const staffCards = document.querySelectorAll('[data-department]');
+    const staffCards = document.querySelectorAll('.staff-card-small');
+    const staffEmptyState = document.getElementById('staffEmptyState');
+
+    const updateStaffVisibility = (filter) => {
+        let visibleCount = 0;
+
+        staffCards.forEach(card => {
+            const department = card.getAttribute('data-department');
+            const shouldShow = filter === 'all' || department === filter;
+            card.style.display = shouldShow ? '' : 'none';
+            if (shouldShow) visibleCount += 1;
+        });
+
+        if (staffEmptyState) {
+            staffEmptyState.style.display = visibleCount === 0 ? '' : 'none';
+        }
+    };
 
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
             filterButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
             const filter = button.getAttribute('data-filter');
-
-            staffCards.forEach(card => {
-                const department = card.getAttribute('data-department');
-                if (filter === 'all' || department === filter) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
+            updateStaffVisibility(filter);
         });
     });
+
+    updateStaffVisibility('all');
 </script>

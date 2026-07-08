@@ -68,7 +68,7 @@ if (!function_exists('is_active_nav')) {
                     <a class="nav-link <?= is_active_nav('services', $current_page); ?>" href="services.php">Services</a>
                 </li>
                 <li class="nav-item px-1">
-                    <a class="nav-link <?= is_active_nav('certifications', $current_page); ?>" href="about.php#certifications">Certifications</a>
+                    <a class="nav-link <?= is_active_nav('certifications', $current_page); ?>" href="about.php#licenses-standards">Certifications</a>
                 </li>
                 <li class="nav-item px-1">
                     <a class="nav-link <?= is_active_nav('projects', $current_page); ?>" href="projects.php">Projects</a>

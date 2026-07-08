@@ -30,6 +30,48 @@ function safeFetch($pdo, $sql) {
     }
 }
 
+function handleProjectImageUploads(array $files): string {
+    $uploadedImages = [];
+    $uploadedFiles = $files['project_images'] ?? null;
+
+    if (!empty($uploadedFiles['name']) && is_array($uploadedFiles['name'])) {
+        $destDir = __DIR__ . '/../uploads/projects/';
+        if (!is_dir($destDir)) {
+            mkdir($destDir, 0755, true);
+        }
+
+        foreach ($uploadedFiles['name'] as $index => $name) {
+            if ($name === '') {
+                continue;
+            }
+            if ($uploadedFiles['error'][$index] !== UPLOAD_ERR_OK) {
+                continue;
+            }
+
+            $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            if (!in_array($ext, $allowed, true)) {
+                continue;
+            }
+            if ($uploadedFiles['size'][$index] > 2 * 1024 * 1024) {
+                continue;
+            }
+
+            $filename = uniqid('projectimg_') . '.' . $ext;
+            $target = $destDir . $filename;
+            if (move_uploaded_file($uploadedFiles['tmp_name'][$index], $target)) {
+                $uploadedImages[] = 'uploads/projects/' . $filename;
+            }
+        }
+    }
+
+    if (!empty($uploadedImages)) {
+        return implode($uploadedImages, '|');
+    }
+
+    return '';
+}
+
 // Handle non-programmer CRUD actions via simple POST forms
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $action = $_POST['action'];
@@ -59,7 +101,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $date_str = trim($_POST['date_str'] ?? 'Ongoing Initiative');
         $metrics = trim($_POST['metrics'] ?? '100% Zero Landfill');
         $desc = trim($_POST['desc'] ?? '');
-        $img = trim($_POST['img'] ?? 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=600&q=80');
+        $img = trim($_POST['img'] ?? '');
+        $uploadedImageList = handleProjectImageUploads($_FILES);
+        if ($uploadedImageList !== '') {
+            $img = $uploadedImageList;
+        } elseif ($img === '') {
+            $img = 'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?auto=format&fit=crop&w=600&q=80';
+        }
 
         if ($title && $desc) {
             $stmt = $pdo->prepare("INSERT INTO projects (id, category, badge, title, date_str, description, metrics, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
@@ -132,6 +180,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $metrics = trim($_POST['metrics'] ?? '');
         $desc = trim($_POST['desc'] ?? '');
         $img = trim($_POST['img'] ?? '');
+        $uploadedImageList = handleProjectImageUploads($_FILES);
+        if ($uploadedImageList !== '') {
+            $img = $uploadedImageList;
+        }
         if ($id && $title) {
             $stmt = $pdo->prepare("UPDATE projects SET category = ?, badge = ?, title = ?, date_str = ?, description = ?, metrics = ?, image_url = ? WHERE id = ?");
             $stmt->execute([$category, $badge, $title, $date_str, $desc, $metrics, $img, $id]);
@@ -677,7 +729,7 @@ $resources = safeFetch($pdo, "SELECT * FROM download_resources ORDER BY created_
                                                                     <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen text-primary me-2"></i>Edit Featured Project</h5>
                                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                                 </div>
-                                                                <form method="POST" action="dashboard.php">
+                                                                <form method="POST" action="dashboard.php" enctype="multipart/form-data">
                                                                     <div class="modal-body p-4">
                                                                         <input type="hidden" name="action" value="edit_project">
                                                                         <input type="hidden" name="id" value="<?= h($proj['id']); ?>">
@@ -714,6 +766,11 @@ $resources = safeFetch($pdo, "SELECT * FROM download_resources ORDER BY created_
                                                                             <label class="form-label font-sm fw-semibold">Image URL</label>
                                                                             <input type="url" name="img" class="form-control rounded-pill px-3 py-2 font-sm" value="<?= h($proj['image_url']); ?>">
                                                                         </div>
+                                                                        <div class="mb-3">
+                                                                            <label class="form-label font-sm fw-semibold">Upload Gallery Images</label>
+                                                                            <input type="file" name="project_images[]" class="form-control rounded-pill px-3 py-2 font-sm" multiple accept="image/*">
+                                                                            <div class="form-text">Upload multiple images to build a gallery. Leave blank to keep the existing image URL.</div>
+                                                                        </div>
                                                                         <div class="mb-2">
                                                                             <label class="form-label font-sm fw-semibold">Description</label>
                                                                             <textarea name="desc" class="form-control rounded-3 p-3 font-sm" rows="3"><?= h($proj['description']); ?></textarea>
@@ -739,7 +796,7 @@ $resources = safeFetch($pdo, "SELECT * FROM download_resources ORDER BY created_
                     <div class="col-lg-5">
                         <div class="card border-0 shadow-sm p-4 bg-white sticky-top" style="top: 90px;">
                             <h5 class="fw-bold mb-3"><i class="fa-solid fa-plus-circle text-primary me-2"></i>Add Featured Project</h5>
-                            <form method="POST" action="dashboard.php">
+                            <form method="POST" action="dashboard.php" enctype="multipart/form-data">
                                 <input type="hidden" name="action" value="add_project">
                                 <div class="mb-3">
                                     <label class="form-label font-sm fw-semibold">Project Title *</label>
