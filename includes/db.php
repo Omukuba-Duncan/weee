@@ -6,10 +6,11 @@
  */
 declare(strict_types=1);
 
-$host = 'localhost';
-$db   = 'weeecentre_db';
-$user = 'root'; // Default XAMPP MySQL user
-$pass = '';     // Default XAMPP MySQL password is blank
+$host = getenv('DB_HOST') ?: 'reseau.proxy.rlwy.net';
+$port = getenv('DB_PORT') ?: '54949';
+$db   = getenv('DB_NAME') ?: 'railway';
+$user = getenv('DB_USER') ?: 'root';
+$pass = getenv('DB_PASS') ?: 'cFzyIMPPLwoWPVzkQBnfZZzwDvXPJsPs';
 $charset = 'utf8mb4';
 
 $options = [
@@ -25,11 +26,7 @@ if (!function_exists('h')) {
 }
 
 try {
-    // 1. Connect to MySQL without dbname to ensure database exists
-    $pdoServer = new PDO("mysql:host=$host;charset=$charset", $user, $pass, $options);
-    $pdoServer->exec("CREATE DATABASE IF NOT EXISTS `$db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;");
-    
-    // 2. Connect directly to weeecentre_db
+    //Connect directly to Railway MySQL
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
     $pdo = new PDO($dsn, $user, $pass, $options);
 
@@ -173,6 +170,6 @@ try {
     }
 
 } catch (PDOException $e) {
-    die("XAMPP MySQL Connection Failed: " . $e->getMessage());
+    die("Database Connection Failed: " . $e->getMessage());
 }
 ?>
